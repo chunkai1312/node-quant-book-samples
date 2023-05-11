@@ -14,7 +14,6 @@ export class MopsScraperService {
 
   async fetchQuarterlyEps(options: { market: Market, year: number, quarter: number }) {
     const { market, year, quarter } = options;
-
     const form = new URLSearchParams({
       encodeURIComponent: '1',
       step: '1',
@@ -26,12 +25,10 @@ export class MopsScraperService {
       season: numeral(quarter).format('00'),
     });
     const url = 'https://mops.twse.com.tw/mops/web/t163sb04';
+    const response = await firstValueFrom(this.httpService.post(url, form));
+    const $ = cheerio.load(response.data);
 
-    const page = await firstValueFrom(this.httpService.post(url, form)).then(response => response.data);
-
-    const $ = cheerio.load(page);
-
-    const data = $('.even,.odd').map((i, el) => {
+    const data = $('.even,.odd').map((_, el) => {
       const td = $(el).find('td');
       const symbol = td.eq(0).text().trim();
       const name = td.eq(1).text().trim();
@@ -46,19 +43,17 @@ export class MopsScraperService {
     const { market, year, month, type } = options;
     const suffix = `${numeral(year).subtract(1911).value()}_${month}_${type}`;
     const url = `https://mops.twse.com.tw/nas/t21/${market}/t21sc03_${suffix}.html`;
-
-    const page = await firstValueFrom(this.httpService.get(url, { responseType: 'arraybuffer' }))
-      .then(response => iconv.decode(response.data, 'big5'));
-
+    const response = await firstValueFrom(this.httpService.get(url, { responseType: 'arraybuffer' }));
+    const page = iconv.decode(response.data, 'big5');
     const $ = cheerio.load(page);
 
     const data = $('tr [align=right]')
-      .filter((i, el) => {
+      .filter((_, el) => {
         const th = $(el).find('th');
         const td = $(el).find('td');
         return (th.length === 0) && !!td.eq(0).text();
       })
-      .map((i, el) => {
+      .map((_, el) => {
         const td = $(el).find('td');
         const symbol = td.eq(0).text().trim();
         const name = td.eq(1).text().trim();

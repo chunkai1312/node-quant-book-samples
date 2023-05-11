@@ -30,8 +30,8 @@ export class MarketStatsService {
   }
 
   @Cron('0 0 15 * * *')
-  async updateTaiex(date: string) {
-    const updated = await this.twseScraperService.fetchMarketTrades(date)
+  async updateTaiex(date: string = DateTime.local().toISODate()) {
+    const updated = await this.twseScraperService.fetchMarketTrades({ date })
       .then(data => data && {
         date,
         taiexPrice: data.price,
@@ -45,11 +45,11 @@ export class MarketStatsService {
   }
 
   @Cron('0 30 15 * * *')
-  async updateInstInvestorsTrades(date: string) {
-    const updated = await this.twseScraperService.fetchInstInvestorsTrades(date)
+  async updateInstInvestorsTrades(date: string = DateTime.local().toISODate()) {
+    const updated = await this.twseScraperService.fetchInstInvestorsTrades({ date })
       .then(data => data && {
         date,
-        finiNetBuySell: data.foreignInvestorsNetBuySell,
+        finiNetBuySell: data.finiNetBuySell,
         sitcNetBuySell: data.sitcNetBuySell,
         dealersNetBuySell: data.dealersNetBuySell,
       })
@@ -60,8 +60,8 @@ export class MarketStatsService {
   }
 
   @Cron('0 30 21 * * *')
-  async updateMarginTransactions(date: string) {
-    const updated = await this.twseScraperService.fetchMarginTransactions(date)
+  async updateMarginTransactions(date: string = DateTime.local().toISODate()) {
+    const updated = await this.twseScraperService.fetchMarginTransactions({ date })
       .then(data => data && {
         date,
         marginBalance: data.marginBalance,
@@ -76,11 +76,11 @@ export class MarketStatsService {
   }
 
   @Cron('0 0 15 * * *')
-  async updateFiniTxfNetOi(date: string) {
-    const updated = await this.taifexScraperService.fetchInstInvestorsTxfTrades(date)
+  async updateFiniTxfNetOi(date: string = DateTime.local().toISODate()) {
+    const updated = await this.taifexScraperService.fetchInstInvestorsTxfTrades({ date })
       .then(data => data && {
         date,
-        finiTxfNetOi: data.finiNetOiVolume,
+        finiTxfNetOi: data.finiTxfNetOi,
       })
       .then(data => data && this.marketStatsRepository.updateMarketStats(data));
 
@@ -89,12 +89,12 @@ export class MarketStatsService {
   }
 
   @Cron('5 0 15 * * *')
-  async updateFiniTxoNetOiValue(date: string) {
-    const updated = await this.taifexScraperService.fetchInstInvestorsTxoTrades(date)
+  async updateFiniTxoNetOiValue(date: string = DateTime.local().toISODate()) {
+    const updated = await this.taifexScraperService.fetchInstInvestorsTxoTrades({ date })
       .then(data => data && {
         date,
-        finiTxoCallsNetOiValue: data.finiCallsNetOiValue,
-        finiTxoPutsNetOiValue: data.finiPutsNetOiValue,
+        finiTxoCallsNetOiValue: data.finiTxoCallsNetOiValue,
+        finiTxoPutsNetOiValue: data.finiTxoPutsNetOiValue,
       })
       .then(data => data && this.marketStatsRepository.updateMarketStats(data));
 
@@ -103,12 +103,12 @@ export class MarketStatsService {
   }
 
   @Cron('10 0 15 * * *')
-  async updateLargeTradersTxfNetOi(date: string) {
-    const updated = await this.taifexScraperService.fetchLargeTradersTxfPosition(date)
+  async updateLargeTradersTxfNetOi(date: string = DateTime.local().toISODate()) {
+    const updated = await this.taifexScraperService.fetchLargeTradersTxfPosition({ date })
       .then(data => data && {
         date,
-        top10SpecificTxfFrontMonthNetOi: data.top10SpecificFrontMonthNetOi,
-        top10SpecificTxfBackMonthsNetOi: data.top10SpecificBackMonthsNetOi,
+        topTenSpecificFrontMonthTxfNetOi: data.topTenSpecificFrontMonthTxfNetOi,
+        topTenSpecificBackMonthsTxfNetOi: data.topTenSpecificBackMonthsTxfNetOi,
       })
       .then(data => data && this.marketStatsRepository.updateMarketStats(data));
 
@@ -117,8 +117,8 @@ export class MarketStatsService {
   }
 
   @Cron('15 0 15 * * *')
-  async updateRetailMxfPosition(date: string) {
-    const updated = await this.taifexScraperService.fetchRetailMxfPosition(date)
+  async updateRetailMxfPosition(date: string = DateTime.local().toISODate()) {
+    const updated = await this.taifexScraperService.fetchRetailMxfPosition({ date })
       .then(data => data && {
         date,
         retailMxfNetOi: data.retailMxfNetOi,
@@ -131,8 +131,8 @@ export class MarketStatsService {
   }
 
   @Cron('20 0 15 * * *')
-  async updateTxoPutCallRatio(date: string) {
-    const updated = await this.taifexScraperService.fetchTxoPutCallRatio(date)
+  async updateTxoPutCallRatio(date: string = DateTime.local().toISODate()) {
+    const updated = await this.taifexScraperService.fetchTxoPutCallRatio({ date })
       .then(data => data && {
         date,
         txoPutCallRatio: data.txoPutCallRatio,
@@ -144,8 +144,8 @@ export class MarketStatsService {
   }
 
   @Cron('0 0 17 * * *')
-  async updateUsdTwdRate(date: string) {
-    const updated = await this.taifexScraperService.fetchExchangeRates(date)
+  async updateUsdTwdRate(date: string = DateTime.local().toISODate()) {
+    const updated = await this.taifexScraperService.fetchExchangeRates({ date })
       .then(data => data && {
         date,
         usdtwd: data.usdtwd,

@@ -11,14 +11,15 @@ export class TwseScraperService {
   constructor(private httpService: HttpService) {}
 
   async fetchListedStocks(options?: { market: 'TSE' | 'OTC' }) {
-    const tse = 'https://isin.twse.com.tw/isin/class_main.jsp?market=1&issuetype=1';
-    const otc = 'https://isin.twse.com.tw/isin/class_main.jsp?market=2&issuetype=4';
-    const url = (options?.market === 'OTC') ? otc : tse;
-
-    const page = await firstValueFrom(
-      this.httpService.get(url, { responseType: 'arraybuffer' }),
-    ).then((response) => iconv.decode(response.data, 'big5'));
-
+    const market = options?.market ?? 'TSE';
+    const url = {
+      'TSE': 'https://isin.twse.com.tw/isin/class_main.jsp?market=1&issuetype=1',
+      'OTC': 'https://isin.twse.com.tw/isin/class_main.jsp?market=2&issuetype=4',
+    };
+    const response = await firstValueFrom(
+      this.httpService.get(url[market], { responseType: 'arraybuffer' })
+    );
+    const page = iconv.decode(response.data, 'big5');
     const $ = cheerio.load(page);
 
     return $('.h4 tr').slice(1).map((_, el) => {
@@ -32,168 +33,109 @@ export class TwseScraperService {
     }).toArray();
   }
 
-  async fetchMarketTrades(date: string) {
-    const formattedDate = DateTime.fromISO(date).toFormat('yyyyMMdd');
-    const query = new URLSearchParams({ date: formattedDate, response: 'json' });
+  async fetchMarketTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const query = new URLSearchParams({
+      date: DateTime.fromISO(date).toFormat('yyyyMMdd'),
+      response: 'json',
+    });
     const url = `https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?${query}`;
 
-    const data = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.stat === 'OK') && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = (response.data.stat === 'OK') && response.data;
+    if (!json) return null;
 
-    return data?.data
-      ?.map(row => {
-        const [ date, ...values ] = row;
-        const [ year, month, day ] = date.split('/');
-        const formattedDate = `${+year + 1911}-${month}-${day}`;
-
-        const [ tradeVolume, tradeValue, transaction, price, change ]
-          = values.map(value => numeral(value).value());
-
-        return {
-          date: formattedDate,
-          tradeVolume,
-          tradeValue,
-          transaction,
-          price,
-          change,
-        };
-      })
-      ?.find(data => data.date === date) ?? null;
+    return json.data.map(row => {
+      const [year, month, day] = row[0].split('/');
+      return {
+        date: `${+year + 1911}-${month}-${day}`,
+        tradeVolume: numeral(row[1]).value(),
+        tradeValue: numeral(row[2]).value(),
+        transaction: numeral(row[3]).value(),
+        price: numeral(row[4]).value(),
+        change: numeral(row[5]).value(),
+      };
+    }).find(data => data.date === date);
   }
 
-  async fetchMarketBreadth(date: string) {
-    const formattedDate = DateTime.fromISO(date).toFormat('yyyyMMdd');
-    const query = new URLSearchParams({ date: formattedDate, response: 'json' });
+  async fetchMarketBreadth(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const query = new URLSearchParams({
+      date: DateTime.fromISO(date).toFormat('yyyyMMdd'),
+      response: 'json',
+    });
     const url = `https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?${query}`;
 
-    const data = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.stat === 'OK') && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = (response.data.stat === 'OK') && response.data;
+    if (!json) return null;
 
-    const raw = data?.tables[7]?.data?.map(row => row[2]);
-    const [ up, limitUp ] = raw[0].replace(')', '').split('(').map(value => numeral(value).value());
-    const [ down, limitDown ] = raw[1].replace(')', '').split('(').map(value => numeral(value).value());
-    const [ unchanged, unmatched, notApplicable ] = raw.slice(2).map(value => numeral(value).value());
+    const raw = json.tables[7].data.map(row => row[2]);
+    const [up, limitUp] = raw[0].replace(')', '').split('(');
+    const [down, limitDown] = raw[1].replace(')', '').split('(');
+    const [unchanged, unmatched, notApplicable] = raw.slice(2);
 
     return {
       date,
-      up,
-      limitUp,
-      down,
-      limitDown,
-      unchanged,
-      unmatched: (unmatched + notApplicable),
+      up: numeral(up).value(),
+      limitUp: numeral(limitUp).value(),
+      down: numeral(down).value(),
+      limitDown: numeral(limitDown).value(),
+      unchanged: numeral(unchanged).value(),
+      unmatched: numeral(unmatched).value() + numeral(notApplicable).value(),
     };
   }
 
-  async fetchInstInvestorsTrades(date: string) {
-    const dayDate = DateTime.fromISO(date).toFormat('yyyyMMdd');
-    const query = new URLSearchParams({ dayDate, type: 'day', response: 'json' });
+  async fetchInstInvestorsTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const query = new URLSearchParams({
+      dayDate: DateTime.fromISO(date).toFormat('yyyyMMdd'),
+      type: 'day',
+      response: 'json',
+    });
     const url = `https://www.twse.com.tw/rwd/zh/fund/BFI82U?${query}`;
 
-    const responseData = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.stat === 'OK') && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = (response.data.stat === 'OK') && response.data;
+    if (!json) return null;
 
-    if (!responseData) return null;
-
-    const raw = responseData.data
-      .map(data => data.slice(1)).flat()
-      .map(data => numeral(data).value() || +data);
-
-    const [
-      dealersProprietaryBuy,
-      dealersProprietarySell,
-      dealersProprietaryNetBuySell,
-      dealersHedgeBuy,
-      dealersHedgeSell,
-      dealersHedgeNetBuySell,
-      sitcBuy,
-      sitcSell,
-      sitcNetBuySell,
-      foreignDealersExcludedBuy,
-      foreignDealersExcludedSell,
-      foreignDealersExcludedNetBuySell,
-      foreignDealersBuy,
-      foreignDealersSell,
-      foreignDealersNetBuySell,
-    ] = raw;
-
-    const foreignInvestorsBuy = foreignDealersExcludedBuy + foreignDealersBuy;
-    const foreignInvestorsSell = foreignDealersExcludedSell + foreignDealersSell;
-    const foreignInvestorsNetBuySell = foreignDealersExcludedNetBuySell + foreignDealersNetBuySell;
-    const dealersBuy = dealersProprietaryBuy + dealersHedgeBuy;
-    const dealersSell = dealersProprietarySell + dealersHedgeSell;
-    const dealersNetBuySell = dealersProprietaryNetBuySell + dealersHedgeNetBuySell;
+    const data = json.data
+      .map(row => row.slice(1)).flat()
+      .map(row => numeral(row).value());
 
     return {
       date,
-      foreignDealersExcludedBuy,
-      foreignDealersExcludedSell,
-      foreignDealersExcludedNetBuySell,
-      foreignDealersBuy,
-      foreignDealersSell,
-      foreignDealersNetBuySell,
-      foreignInvestorsBuy,
-      foreignInvestorsSell,
-      foreignInvestorsNetBuySell,
-      sitcBuy,
-      sitcSell,
-      sitcNetBuySell,
-      dealersProprietaryBuy,
-      dealersProprietarySell,
-      dealersProprietaryNetBuySell,
-      dealersHedgeBuy,
-      dealersHedgeSell,
-      dealersHedgeNetBuySell,
-      dealersBuy,
-      dealersSell,
-      dealersNetBuySell,
+      finiNetBuySell: data[11] + data[14],
+      sitcNetBuySell: data[8],
+      dealersNetBuySell: data[2] + data[5],
     };
   }
 
-  async fetchMarginTransactions(date: string) {
-    const formattedDate = DateTime.fromISO(date).toFormat('yyyyMMdd');
-    const query = new URLSearchParams({ date: formattedDate, selectType: 'MS', response: 'json' });
+  async fetchMarginTransactions(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const query = new URLSearchParams({
+      date: DateTime.fromISO(date).toFormat('yyyyMMdd'),
+      selectType: 'MS',
+      response: 'json',
+    });
     const url = `https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN?${query}`;
 
-    const responseData = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.stat === 'OK') ? response.data : null);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = (response.data.stat === 'OK') && response.data;
+    if (!json) return null;
 
-    if (!responseData) return null;
-
-    const raw = responseData.tables[0].data
+    const data = json.tables[0].data
       .map(data => data.slice(1)).flat()
-      .map(data => numeral(data).value() || +data);
-
-    const [
-      marginPurchase,
-      marginSale,
-      cashRedemption,
-      marginBalancePrev,
-      marginBalance,
-      shortCovering,
-      shortSale,
-      stockRedemption,
-      shortBalancePrev,
-      shortBalance,
-      marginPurchaseValue,
-      marginSaleValue,
-      cashRedemptionValue,
-      marginBalanceValuePrev,
-      marginBalanceValue,
-    ] = raw;
-
-    const marginBalanceChange = marginBalance - marginBalancePrev;
-    const marginBalanceValueChange = marginBalanceValue - marginBalanceValuePrev;
-    const shortBalanceChange = shortBalance - shortBalancePrev;
+      .map(data => numeral(data).value());
 
     return {
       date,
-      marginBalance,
-      marginBalanceChange,
-      marginBalanceValue,
-      marginBalanceValueChange,
-      shortBalance,
-      shortBalanceChange,
+      marginBalance: data[4],
+      marginBalanceChange: data[4] - data[3],
+      marginBalanceValue: data[14],
+      marginBalanceValueChange: data[14] - data[13],
+      shortBalance: data[9],
+      shortBalanceChange: data[9] - data[8],
     };
   }
 }

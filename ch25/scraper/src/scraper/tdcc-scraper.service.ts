@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import * as numeral from 'numeral';
 import * as csvtojson from 'csvtojson';
+import { DateTime } from 'luxon';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -11,34 +12,25 @@ export class TdccScraperService {
 
   async fetchEquitiesHolders() {
     const url = 'https://smart.tdcc.com.tw/opendata/getOD.ashx?id=1-5';
-
-    const responseData = await firstValueFrom(this.httpService.post(url))
-      .then(response => csvtojson({ noheader: true, output: 'csv' }).fromString(response.data));
-
-    const [ fields, ...rows ] = responseData;
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = await csvtojson({ noheader: true, output: 'csv' }).fromString(response.data);
+    const [ fields, ...rows ] = json;
     if (fields[0] !== '資料日期') return null;
 
-    const distributions = rows.map(row => {
-      const [ date, symbol, level, holders, shares, proportion ] = row;
-      return {
-        date,
-        symbol,
-        level: numeral(level).value(),
-        holders: numeral(holders).value(),
-        shares: numeral(shares).value(),
-        proportion: numeral(proportion).value(),
-      };
-    });
+    const distributions = rows.map(row => ({
+      date: DateTime.fromFormat(row[0], 'yyyyMMdd').toISODate(),
+      symbol: row[1],
+      level: numeral(row[2]).value(),
+      holders: numeral(row[3]).value(),
+      shares: numeral(row[4]).value(),
+      proportion: numeral(row[5]).value(),
+    }));
 
-    const data = _(distributions)
-      .groupBy('symbol')
-      .map((rows: any[]) => {
+    return _(distributions).groupBy('symbol')
+      .map(rows => {
         const { date, symbol } = rows[0];
         const data = rows.map(row => _.omit(row, ['date', 'symbol']));
         return { date, symbol, data };
-      })
-      .value();
-
-    return data;
+      }).value();
   }
 }

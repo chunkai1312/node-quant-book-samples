@@ -8,118 +8,79 @@ import { firstValueFrom } from 'rxjs';
 export class TpexScraperService {
   constructor(private httpService: HttpService) {}
 
-  async fetchMarketTrades(date: string) {
-    const dt = DateTime.fromISO(date);
-    const formattedDate = `${dt.get('year') - 1911}/${dt.toFormat('MM/dd')}`;
-    const query = new URLSearchParams({ d: formattedDate, o: 'json' });
+  async fetchMarketTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const [year, month, day] = date.split('-');
+    const query = new URLSearchParams({
+      d: `${+year - 1911}/${month}/${day}`,
+      o: 'json',
+    });
     const url = `https://www.tpex.org.tw/web/stock/aftertrading/daily_trading_index/st41_result.php?${query}`;
 
-    const data = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.iTotalRecords > 0) && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = response.data.iTotalRecords > 0 && response.data;
+    if (!json) return null;
 
-    return data?.aaData
-      ?.map(row => {
-        const [ date, ...values ] = row;
-        const [ year, month, day ] = date.split('/');
-        const formattedDate = `${+year + 1911}-${month}-${day}`;
-
-        const [ tradeVolume, tradeValue, transaction, price, change ]
-          = values.map(value => numeral(value).value());
-
-        return {
-          date: formattedDate,
-          tradeVolume,
-          tradeValue,
-          transaction,
-          price,
-          change,
-        };
-      })
-      ?.find(data => data.date === date) ?? null;
+    return json.aaData.map(row => {
+      const [year, month, day] = row[0].split('/');
+      return {
+        date: `${+year + 1911}-${month}-${day}`,
+        tradeVolume: numeral(row[1]).value(),
+        tradeValue: numeral(row[2]).value(),
+        transaction: numeral(row[3]).value(),
+        price: numeral(row[4]).value(),
+        change: numeral(row[5]).value(),
+      };
+    }).find(data => data.date === date);
   }
 
-  async fetchMarketBreadth(date: string) {
-    const dt = DateTime.fromISO(date);
-    const formattedDate = `${dt.get('year') - 1911}/${dt.toFormat('MM/dd')}`;
-    const query = new URLSearchParams({ d: formattedDate, o: 'json' });
+  async fetchMarketBreadth(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const [year, month, day] = date.split('-');
+    const query = new URLSearchParams({
+      d: `${+year - 1911}/${month}/${day}`,
+      o: 'json',
+    });
     const url = `https://www.tpex.org.tw/web/stock/aftertrading/market_highlight/highlight_result.php?${query}`;
 
-    const data = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.iTotalRecords > 0) && response.data);
-
-    return data ? {
-      date,
-      up: numeral(data.upNum).value(),
-      limitUp: numeral(data.upStopNum).value(),
-      down: numeral(data.downNum).value(),
-      limitDown: numeral(data.downStopNum).value(),
-      unchanged: numeral(data.noChangeNum).value(),
-      unmatched: numeral(data.noTradeNum).value(),
-    } : null;
-  }
-
-  async fetchInstInvestorsTrades(date: string) {
-    const dt = DateTime.fromISO(date);
-    const d = `${dt.get('year') - 1911}/${dt.toFormat('MM/dd')}`;
-    const query = new URLSearchParams({ d, t: 'D', o: 'json' });
-    const url = `https://www.tpex.org.tw/web/stock/3insti/3insti_summary/3itrdsum_result.php?${query}`;
-
-    const responseData = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.iTotalRecords > 0) && response.data);
-
-    if (!responseData) return null;
-
-    const raw = responseData.aaData
-      .map(data => data.slice(1)).flat()
-      .map(data => numeral(data).value() || +data);
-
-    const [
-      foreignInvestorsBuy,
-      foreignInvestorsSell,
-      foreignInvestorsNetBuySell,
-      foreignDealersExcludedBuy,
-      foreignDealersExcludedSell,
-      foreignDealersExcludedNetBuySell,
-      foreignDealersBuy,
-      foreignDealersSell,
-      foreignDealersNetBuySell,
-      sitcBuy,
-      sitcSell,
-      sitcNetBuySell,
-      dealersBuy,
-      dealersSell,
-      dealersNetBuySell,
-      dealersProprietaryBuy,
-      dealersProprietarySell,
-      dealersProprietaryNetBuySell,
-      dealersHedgeBuy,
-      dealersHedgeSell,
-      dealersHedgeNetBuySell,
-    ] = raw;
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = response.data.iTotalRecords > 0 && response.data;
+    if (!json) return null;
 
     return {
       date,
-      foreignDealersExcludedBuy,
-      foreignDealersExcludedSell,
-      foreignDealersExcludedNetBuySell,
-      foreignDealersBuy,
-      foreignDealersSell,
-      foreignDealersNetBuySell,
-      foreignInvestorsBuy,
-      foreignInvestorsSell,
-      foreignInvestorsNetBuySell,
-      sitcBuy,
-      sitcSell,
-      sitcNetBuySell,
-      dealersProprietaryBuy,
-      dealersProprietarySell,
-      dealersProprietaryNetBuySell,
-      dealersHedgeBuy,
-      dealersHedgeSell,
-      dealersHedgeNetBuySell,
-      dealersBuy,
-      dealersSell,
-      dealersNetBuySell,
+      up: numeral(json.upNum).value(),
+      limitUp: numeral(json.upStopNum).value(),
+      down: numeral(json.downNum).value(),
+      limitDown: numeral(json.downStopNum).value(),
+      unchanged: numeral(json.noChangeNum).value(),
+      unmatched: numeral(json.noTradeNum).value(),
+    };
+  }
+
+  async fetchInstInvestorsTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const [year, month, day] = date.split('-');
+    const query = new URLSearchParams({
+      d: `${+year - 1911}/${month}/${day}`,
+      t: 'D',
+      o: 'json',
+    });
+    const url = `https://www.tpex.org.tw/web/stock/3insti/3insti_summary/3itrdsum_result.php?${query}`;
+
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = response.data.iTotalRecords > 0 && response.data;
+    if (!json) return null;
+
+    const data = json.aaData
+      .map(row => row.slice(1)).flat()
+      .map(row => numeral(row).value());
+
+    return {
+      date,
+      finiNetBuySell: data[2],
+      sitcNetBuySell: data[11],
+      dealersNetBuySell: data[14],
     };
   }
 }

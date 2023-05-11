@@ -9,267 +9,169 @@ import { firstValueFrom } from 'rxjs';
 export class TpexScraperService {
   constructor(private httpService: HttpService) {}
 
-  async fetchMarketTrades(date: string) {
-    const dt = DateTime.fromISO(date);
-    const formattedDate = `${dt.get('year') - 1911}/${dt.toFormat('MM/dd')}`;
-    const query = new URLSearchParams({ d: formattedDate, o: 'json' });
+  async fetchMarketTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const [year, month, day] = date.split('-');
+    const query = new URLSearchParams({
+      d: `${+year - 1911}/${month}/${day}`,
+      o: 'json',
+    });
     const url = `https://www.tpex.org.tw/web/stock/aftertrading/daily_trading_index/st41_result.php?${query}`;
 
-    const data = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.iTotalRecords > 0) && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = response.data.iTotalRecords > 0 && response.data;
+    if (!json) return null;
 
-    return data?.aaData
-      ?.map(row => {
-        const [ date, ...values ] = row;
-        const [ year, month, day ] = date.split('/');
-        const formattedDate = `${+year + 1911}-${month}-${day}`;
-
-        const [ tradeVolume, tradeValue, transaction, price, change ]
-          = values.map(value => numeral(value).value());
-
-        return {
-          date: formattedDate,
-          tradeVolume,
-          tradeValue,
-          transaction,
-          price,
-          change,
-        };
-      })
-      ?.find(data => data.date === date) ?? null;
+    return json.aaData.map(row => {
+      const [year, month, day] = row[0].split('/');
+      return {
+        date: `${+year + 1911}-${month}-${day}`,
+        tradeVolume: numeral(row[1]).value(),
+        tradeValue: numeral(row[2]).value(),
+        transaction: numeral(row[3]).value(),
+        price: numeral(row[4]).value(),
+        change: numeral(row[5]).value(),
+      };
+    }).find(data => data.date === date);
   }
 
-  async fetchMarketBreadth(date: string) {
-    const dt = DateTime.fromISO(date);
-    const formattedDate = `${dt.get('year') - 1911}/${dt.toFormat('MM/dd')}`;
-    const query = new URLSearchParams({ d: formattedDate, o: 'json' });
+  async fetchMarketBreadth(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const [year, month, day] = date.split('-');
+    const query = new URLSearchParams({
+      d: `${+year - 1911}/${month}/${day}`,
+      o: 'json',
+    });
     const url = `https://www.tpex.org.tw/web/stock/aftertrading/market_highlight/highlight_result.php?${query}`;
 
-    const data = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.iTotalRecords > 0) && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = response.data.iTotalRecords > 0 && response.data;
+    if (!json) return null;
 
-    return data ? {
+    return {
       date,
-      up: numeral(data.upNum).value(),
-      limitUp: numeral(data.upStopNum).value(),
-      down: numeral(data.downNum).value(),
-      limitDown: numeral(data.downStopNum).value(),
-      unchanged: numeral(data.noChangeNum).value(),
-      unmatched: numeral(data.noTradeNum).value(),
-    } : null;
+      up: numeral(json.upNum).value(),
+      limitUp: numeral(json.upStopNum).value(),
+      down: numeral(json.downNum).value(),
+      limitDown: numeral(json.downStopNum).value(),
+      unchanged: numeral(json.noChangeNum).value(),
+      unmatched: numeral(json.noTradeNum).value(),
+    };
   }
 
-  async fetchInstInvestorsTrades(date: string) {
-    const dt = DateTime.fromISO(date);
-    const d = `${dt.get('year') - 1911}/${dt.toFormat('MM/dd')}`;
-    const query = new URLSearchParams({ d, t: 'D', o: 'json' });
+  async fetchInstInvestorsTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const [year, month, day] = date.split('-');
+    const query = new URLSearchParams({
+      d: `${+year - 1911}/${month}/${day}`,
+      t: 'D',
+      o: 'json',
+    });
     const url = `https://www.tpex.org.tw/web/stock/3insti/3insti_summary/3itrdsum_result.php?${query}`;
 
-    const responseData = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.iTotalRecords > 0) && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = response.data.iTotalRecords > 0 && response.data;
+    if (!json) return null;
 
-    if (!responseData) return null;
-
-    const raw = responseData.aaData
-      .map(data => data.slice(1)).flat()
-      .map(data => numeral(data).value() || +data);
-
-    const [
-      foreignInvestorsBuy,
-      foreignInvestorsSell,
-      foreignInvestorsNetBuySell,
-      foreignDealersExcludedBuy,
-      foreignDealersExcludedSell,
-      foreignDealersExcludedNetBuySell,
-      foreignDealersBuy,
-      foreignDealersSell,
-      foreignDealersNetBuySell,
-      sitcBuy,
-      sitcSell,
-      sitcNetBuySell,
-      dealersBuy,
-      dealersSell,
-      dealersNetBuySell,
-      dealersProprietaryBuy,
-      dealersProprietarySell,
-      dealersProprietaryNetBuySell,
-      dealersHedgeBuy,
-      dealersHedgeSell,
-      dealersHedgeNetBuySell,
-    ] = raw;
+    const data = json.aaData
+      .map(row => row.slice(1)).flat()
+      .map(row => numeral(row).value());
 
     return {
       date,
-      foreignDealersExcludedBuy,
-      foreignDealersExcludedSell,
-      foreignDealersExcludedNetBuySell,
-      foreignDealersBuy,
-      foreignDealersSell,
-      foreignDealersNetBuySell,
-      foreignInvestorsBuy,
-      foreignInvestorsSell,
-      foreignInvestorsNetBuySell,
-      sitcBuy,
-      sitcSell,
-      sitcNetBuySell,
-      dealersProprietaryBuy,
-      dealersProprietarySell,
-      dealersProprietaryNetBuySell,
-      dealersHedgeBuy,
-      dealersHedgeSell,
-      dealersHedgeNetBuySell,
-      dealersBuy,
-      dealersSell,
-      dealersNetBuySell,
+      finiNetBuySell: data[2],
+      sitcNetBuySell: data[11],
+      dealersNetBuySell: data[14],
     };
   }
 
-  async fetchMarginTransactions(date: string) {
-    const dt = DateTime.fromISO(date);
-    const formattedDate = `${dt.get('year') - 1911}/${dt.toFormat('MM/dd')}`;
-    const query = new URLSearchParams({ d: formattedDate, o: 'json' });
+  async fetchMarginTransactions(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const [year, month, day] = date.split('-');
+    const query = new URLSearchParams({
+      d: `${+year - 1911}/${month}/${day}`,
+      o: 'json',
+    });
     const url = `https://www.tpex.org.tw/web/stock/margin_trading/margin_balance/margin_bal_result.php?${query}`;
 
-    const responseData = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.iTotalRecords > 0) && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = response.data.iTotalRecords > 0 && response.data;
+    if (!json) return null;
 
-    if (!responseData) return null;
-
-    const raw = [
-      ...responseData.tfootData_one,
-      ...responseData.tfootData_two
-    ]
-      .map(data => numeral(data).value())
-      .filter(data => data);
-
-    const [
-      marginBalancePrev,
-      marginPurchase,
-      marginSale,
-      cashRedemption,
-      marginBalance,
-      shortBalancePrev,
-      shortCovering,
-      shortSale,
-      stockRedemption,
-      shortBalance,
-      marginBalanceValuePrev,
-      marginPurchaseValue,
-      marginSaleValue,
-      cashRedemptionValue,
-      marginBalanceValue,
-    ] = raw;
-
-    const marginBalanceChange = marginBalance - marginBalancePrev;
-    const marginBalanceValueChange = marginBalanceValue - marginBalanceValuePrev;
-    const shortBalanceChange = shortBalance - shortBalancePrev;
+    const data = [...json.tfootData_one, ...json.tfootData_two]
+      .map(row => numeral(row).value())
+      .filter(row => row);
 
     return {
       date,
-      marginBalance,
-      marginBalanceChange,
-      marginBalanceValue,
-      marginBalanceValueChange,
-      shortBalance,
-      shortBalanceChange,
+      marginBalance: data[4],
+      marginBalanceChange: data[4] - data[0],
+      marginBalanceValue: data[14],
+      marginBalanceValueChange: data[14] - data[10],
+      shortBalance: data[9],
+      shortBalanceChange: data[9] - data[5],
     };
   }
 
-  async fetchIndicesQuotes(date: string) {
-    const dt = DateTime.fromISO(date);
-    const formattedDate = `${dt.get('year') - 1911}/${dt.toFormat('MM/dd')}`;
-    const query = new URLSearchParams({ d: formattedDate, o: 'json' });
+  async fetchIndicesQuotes(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const [year, month, day] = date.split('-');
+    const query = new URLSearchParams({
+      d: `${+year - 1911}/${month}/${day}`,
+      o: 'json',
+    });
     const url = `https://www.tpex.org.tw/web/stock/iNdex_info/minute_index/1MIN_result.php?${query}`;
 
-    const responseData = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.iTotalRecords > 0) ? response.data : null);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = response.data.iTotalRecords > 0 && response.data;
+    if (!json) return null;
 
-    if (!responseData) return null;
+    const indices = [
+      { symbol: 'IX0044', name: '櫃檯紡纖類指數' },
+      { symbol: 'IX0045', name: '櫃檯機械類指數' },
+      { symbol: 'IX0046', name: '櫃檯鋼鐵類指數' },
+      { symbol: 'IX0048', name: '櫃檯營建類指數' },
+      { symbol: 'IX0049', name: '櫃檯航運類指數' },
+      { symbol: 'IX0050', name: '櫃檯觀光類指數' },
+      { symbol: 'IX0100', name: '櫃檯其他類指數' },
+      { symbol: 'IX0051', name: '櫃檯化工類指數' },
+      { symbol: 'IX0052', name: '櫃檯生技醫療類指數' },
+      { symbol: 'IX0053', name: '櫃檯半導體類指數' },
+      { symbol: 'IX0054', name: '櫃檯電腦及週邊類指數' },
+      { symbol: 'IX0055', name: '櫃檯光電業類指數' },
+      { symbol: 'IX0056', name: '櫃檯通信網路類指數' },
+      { symbol: 'IX0057', name: '櫃檯電子零組件類指數' },
+      { symbol: 'IX0058', name: '櫃檯電子通路類指數' },
+      { symbol: 'IX0059', name: '櫃檯資訊服務類指數' },
+      { symbol: 'IX0099', name: '櫃檯其他電子類指數' },
+      { symbol: 'IX0075', name: '櫃檯文化創意業類指數' },
+      { symbol: 'IX0047', name: '櫃檯電子類指數' },
+      { symbol: 'IX0043', name: '櫃檯指數' },
+    ];
 
-    const quotes = responseData.aaData.reduce((quotes, row) => {
-      const [
+    const quotes = json.aaData.flatMap(row => {
+      const [time, ...values] = row;
+      return values.slice(0, -7).map((value, i) => ({
+        date,
         time,
-        IX0044,
-        IX0045,
-        IX0046,
-        IX0048,
-        IX0049,
-        IX0050,
-        IX0100,
-        IX0051,
-        IX0052,
-        IX0053,
-        IX0054,
-        IX0055,
-        IX0056,
-        IX0057,
-        IX0058,
-        IX0059,
-        IX0099,
-        IX0075,
-        IX0047,
-        IX0043,
-        tradeValue,
-        tradeVolume,
-        transaction,
-        bidOrders,
-        askOrders,
-        bidVolume,
-        askVolume,
-      ] = row;
+        symbol: indices[i].symbol,
+        name: indices[i].name,
+        price: numeral(value).value(),
+      }));
+    });
 
-      return [
-        ...quotes,
-        { date, time, symbol: 'IX0044', name: '櫃檯紡纖類指數', price: numeral(IX0044).value() },
-        { date, time, symbol: 'IX0045', name: '櫃檯機械類指數', price: numeral(IX0045).value() },
-        { date, time, symbol: 'IX0046', name: '櫃檯鋼鐵類指數', price: numeral(IX0046).value() },
-        { date, time, symbol: 'IX0048', name: '櫃檯營建類指數', price: numeral(IX0048).value() },
-        { date, time, symbol: 'IX0049', name: '櫃檯航運類指數', price: numeral(IX0049).value() },
-        { date, time, symbol: 'IX0050', name: '櫃檯觀光類指數', price: numeral(IX0050).value() },
-        { date, time, symbol: 'IX0100', name: '櫃檯其他類指數', price: numeral(IX0100).value() },
-        { date, time, symbol: 'IX0051', name: '櫃檯化工類指數', price: numeral(IX0051).value() },
-        { date, time, symbol: 'IX0052', name: '櫃檯生技醫療類指數', price: numeral(IX0052).value() },
-        { date, time, symbol: 'IX0053', name: '櫃檯半導體類指數', price: numeral(IX0053).value() },
-        { date, time, symbol: 'IX0054', name: '櫃檯電腦及週邊類指數', price: numeral(IX0054).value() },
-        { date, time, symbol: 'IX0055', name: '櫃檯光電業類指數', price: numeral(IX0055).value() },
-        { date, time, symbol: 'IX0056', name: '櫃檯通信網路類指數', price: numeral(IX0056).value() },
-        { date, time, symbol: 'IX0057', name: '櫃檯電子零組件類指數', price: numeral(IX0057).value() },
-        { date, time, symbol: 'IX0058', name: '櫃檯電子通路類指數', price: numeral(IX0058).value() },
-        { date, time, symbol: 'IX0059', name: '櫃檯資訊服務類指數', price: numeral(IX0059).value() },
-        { date, time, symbol: 'IX0099', name: '櫃檯其他電子類指數', price: numeral(IX0099).value() },
-        { date, time, symbol: 'IX0075', name: '櫃檯文化創意業類指數', price: numeral(IX0075).value() },
-        { date, time, symbol: 'IX0047', name: '櫃檯電子類指數', price: numeral(IX0047).value() },
-        { date, time, symbol: 'IX0043', name: '櫃檯指數', price: numeral(IX0043).value() },
-      ];
-    }, []);
-
-    const data = _(quotes)
-      .groupBy('symbol')
-      .map((data: any[]) => {
-        const [ prev, ...quotes ] = data;
+    return _(quotes).groupBy('symbol')
+      .map((quotes: any[]) => {
+        const [prev, ...rows] = quotes;
         const { date, symbol, name } = prev;
-        const openPrice = _.minBy(quotes, 'time').price;
-        const highPrice = _.maxBy(quotes, 'price').price;
-        const lowPrice = _.minBy(quotes, 'price').price;
-        const closePrice = _.maxBy(quotes, 'time').price;
-        const referencePrice = prev.price;
-        const change = numeral(closePrice).subtract(referencePrice).value();
-        const changePercent = +numeral(change).divide(referencePrice).multiply(100).format('0.00');
-
-        return {
-          date,
-          symbol,
-          name,
-          openPrice,
-          highPrice,
-          lowPrice,
-          closePrice,
-          change,
-          changePercent,
-        };
-      })
-      .value();
-
-    return data;
+        const data: Record<string, any> = { date, symbol, name};
+        data.openPrice = _.minBy(rows, 'time').price;
+        data.highPrice = _.maxBy(rows, 'price').price;
+        data.lowPrice = _.minBy(rows, 'price').price;
+        data.closePrice = _.maxBy(rows, 'time').price;
+        data.change = numeral(data.closePrice).subtract(prev.price).value();
+        data.changePercent = +numeral(data.change).divide(prev.price).multiply(100).format('0.00');
+        return data;
+      }).value();
   }
 }

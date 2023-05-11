@@ -11,14 +11,15 @@ export class TwseScraperService {
   constructor(private httpService: HttpService) {}
 
   async fetchListedStocks(options?: { market: 'TSE' | 'OTC' }) {
-    const tse = 'https://isin.twse.com.tw/isin/class_main.jsp?market=1&issuetype=1';
-    const otc = 'https://isin.twse.com.tw/isin/class_main.jsp?market=2&issuetype=4';
-    const url = (options?.market === 'OTC') ? otc : tse;
-
-    const page = await firstValueFrom(
-      this.httpService.get(url, { responseType: 'arraybuffer' }),
-    ).then((response) => iconv.decode(response.data, 'big5'));
-
+    const market = options?.market ?? 'TSE';
+    const url = {
+      'TSE': 'https://isin.twse.com.tw/isin/class_main.jsp?market=1&issuetype=1',
+      'OTC': 'https://isin.twse.com.tw/isin/class_main.jsp?market=2&issuetype=4',
+    };
+    const response = await firstValueFrom(
+      this.httpService.get(url[market], { responseType: 'arraybuffer' })
+    );
+    const page = iconv.decode(response.data, 'big5');
     const $ = cheerio.load(page);
 
     return $('.h4 tr').slice(1).map((_, el) => {
@@ -32,56 +33,56 @@ export class TwseScraperService {
     }).toArray();
   }
 
-  async fetchMarketTrades(date: string) {
-    const formattedDate = DateTime.fromISO(date).toFormat('yyyyMMdd');
-    const query = new URLSearchParams({ date: formattedDate, response: 'json' });
+  async fetchMarketTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const query = new URLSearchParams({
+      date: DateTime.fromISO(date).toFormat('yyyyMMdd'),
+      response: 'json',
+    });
     const url = `https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?${query}`;
 
-    const data = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.stat === 'OK') && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = (response.data.stat === 'OK') && response.data;
+    if (!json) return null;
 
-    return data?.data
-      ?.map(row => {
-        const [ date, ...values ] = row;
-        const [ year, month, day ] = date.split('/');
-        const formattedDate = `${+year + 1911}-${month}-${day}`;
-
-        const [ tradeVolume, tradeValue, transaction, price, change ]
-          = values.map(value => numeral(value).value());
-
-        return {
-          date: formattedDate,
-          tradeVolume,
-          tradeValue,
-          transaction,
-          price,
-          change,
-        };
-      })
-      ?.find(data => data.date === date) ?? null;
+    return json.data.map(row => {
+      const [year, month, day] = row[0].split('/');
+      return {
+        date: `${+year + 1911}-${month}-${day}`,
+        tradeVolume: numeral(row[1]).value(),
+        tradeValue: numeral(row[2]).value(),
+        transaction: numeral(row[3]).value(),
+        price: numeral(row[4]).value(),
+        change: numeral(row[5]).value(),
+      };
+    }).find(data => data.date === date);
   }
 
-  async fetchMarketBreadth(date: string) {
-    const formattedDate = DateTime.fromISO(date).toFormat('yyyyMMdd');
-    const query = new URLSearchParams({ date: formattedDate, response: 'json' });
+  async fetchMarketBreadth(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
+    const query = new URLSearchParams({
+      date: DateTime.fromISO(date).toFormat('yyyyMMdd'),
+      response: 'json',
+    });
     const url = `https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX?${query}`;
 
-    const data = await firstValueFrom(this.httpService.get(url))
-      .then(response => (response.data.stat === 'OK') && response.data);
+    const response = await firstValueFrom(this.httpService.get(url));
+    const json = (response.data.stat === 'OK') && response.data;
+    if (!json) return null;
 
-    const raw = data?.tables[7]?.data?.map(row => row[2]);
-    const [ up, limitUp ] = raw[0].replace(')', '').split('(').map(value => numeral(value).value());
-    const [ down, limitDown ] = raw[1].replace(')', '').split('(').map(value => numeral(value).value());
-    const [ unchanged, unmatched, notApplicable ] = raw.slice(2).map(value => numeral(value).value());
+    const raw = json.tables[7].data.map(row => row[2]);
+    const [up, limitUp] = raw[0].replace(')', '').split('(');
+    const [down, limitDown] = raw[1].replace(')', '').split('(');
+    const [unchanged, unmatched, notApplicable] = raw.slice(2);
 
     return {
       date,
-      up,
-      limitUp,
-      down,
-      limitDown,
-      unchanged,
-      unmatched: (unmatched + notApplicable),
+      up: numeral(up).value(),
+      limitUp: numeral(limitUp).value(),
+      down: numeral(down).value(),
+      limitDown: numeral(limitDown).value(),
+      unchanged: numeral(unchanged).value(),
+      unmatched: numeral(unmatched).value() + numeral(notApplicable).value(),
     };
   }
 }

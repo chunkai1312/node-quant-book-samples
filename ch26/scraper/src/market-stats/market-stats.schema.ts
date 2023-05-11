@@ -48,10 +48,10 @@ export class MarketStats {
   finiTxoPutsNetOiValue: number;
 
   @Prop()
-  top10SpecificTxfFrontMonthNetOi: number;
+  topTenSpecificFrontMonthTxfNetOi: number;
 
   @Prop()
-  top10SpecificTxfBackMonthsNetOi: number;
+  topTenSpecificBackMonthsTxfNetOi: number;
 
   @Prop()
   retailMxfNetOi: number;

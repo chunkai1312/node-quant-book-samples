@@ -10,7 +10,8 @@ import { firstValueFrom } from 'rxjs';
 export class TaifexScraperService {
   constructor(private httpService: HttpService) {}
 
-  async fetchInstInvestorsTxfTrades(date: string) {
+  async fetchInstInvestorsTxfTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
     const queryDate = DateTime.fromISO(date).toFormat('yyyy/MM/dd');
     const form = new URLSearchParams({
       queryStartDate: queryDate,
@@ -19,96 +20,21 @@ export class TaifexScraperService {
     });
     const url = 'https://www.taifex.com.tw/cht/3/futContractsDateDown';
 
-    const responseData = await firstValueFrom(this.httpService.post(url, form, { responseType: 'arraybuffer' }))
-      .then(response => csvtojson({ noheader: true, output: 'csv' }).fromString(iconv.decode(response.data, 'big5')));
-
-    const [ fields, dealers, sitc, fini ] = responseData;
+    const response = await firstValueFrom(this.httpService.post(url, form, { responseType: 'arraybuffer' }))
+    const json = await csvtojson({ noheader: true, output: 'csv' }).fromString(iconv.decode(response.data, 'big5'));
+    const [ fields, dealers, sitc, fini ] = json;
     if (fields[0] !== '日期') return null;
-
-    const raw = [ ...dealers.slice(3), ...sitc.slice(3), ...fini.slice(3) ]
-      .map(data => numeral(data).value());
-
-    const [
-      dealersLongTradeVolume,
-      dealersLongTradeValue,
-      dealersShortTradeVolume,
-      dealersShortTradeValue,
-      dealersNetTradeVolume,
-      dealersNetTradeValue,
-      dealersLongOiVolume,
-      dealersLongOiValue,
-      dealersShortOiVolume,
-      dealersShortOiValue,
-      dealersNetOiVolume,
-      dealersNetOiValue,
-      sitcLongTradeVolume,
-      sitcLongTradeValue,
-      sitcShortTradeVolume,
-      sitcShortTradeValue,
-      sitcNetTradeVolume,
-      sitcNetTradeValue,
-      sitcLongOiVolume,
-      sitcLongOiValue,
-      sitcShortOiVolume,
-      sitcShortOiValue,
-      sitcNetOiVolume,
-      sitcNetOiValue,
-      finiLongTradeVolume,
-      finiLongTradeValue,
-      finiShortTradeVolume,
-      finiShortTradeValue,
-      finiNetTradeVolume,
-      finiNetTradeValue,
-      finiLongOiVolume,
-      finiLongOiValue,
-      finiShortOiVolume,
-      finiShortOiValue,
-      finiNetOiVolume,
-      finiNetOiValue,
-    ] = raw;
 
     return {
       date,
-      finiLongTradeVolume,
-      finiLongTradeValue,
-      finiShortTradeVolume,
-      finiShortTradeValue,
-      finiNetTradeVolume,
-      finiNetTradeValue,
-      finiLongOiVolume,
-      finiLongOiValue,
-      finiShortOiVolume,
-      finiShortOiValue,
-      finiNetOiVolume,
-      finiNetOiValue,
-      sitcLongTradeVolume,
-      sitcLongTradeValue,
-      sitcShortTradeVolume,
-      sitcShortTradeValue,
-      sitcNetTradeVolume,
-      sitcNetTradeValue,
-      sitcLongOiVolume,
-      sitcLongOiValue,
-      sitcShortOiVolume,
-      sitcShortOiValue,
-      sitcNetOiVolume,
-      sitcNetOiValue,
-      dealersLongTradeVolume,
-      dealersLongTradeValue,
-      dealersShortTradeVolume,
-      dealersShortTradeValue,
-      dealersNetTradeVolume,
-      dealersNetTradeValue,
-      dealersLongOiVolume,
-      dealersLongOiValue,
-      dealersShortOiVolume,
-      dealersShortOiValue,
-      dealersNetOiVolume,
-      dealersNetOiValue,
+      finiTxfNetOi: numeral(fini[13]).value(),
+      sitcTxfNetOi: numeral(sitc[13]).value(),
+      dealersTxfNetOi: numeral(dealers[13]).value(),
     };
   }
 
-  async fetchInstInvestorsTxoTrades(date: string) {
+  async fetchInstInvestorsTxoTrades(options?: { date: string }) {
+    const date = options?.date ?? DateTime.local().toISODate();
     const queryDate = DateTime.fromISO(date).toFormat('yyyy/MM/dd');
     const form = new URLSearchParams({
       queryStartDate: queryDate,
@@ -117,170 +43,25 @@ export class TaifexScraperService {
     });
     const url = 'https://www.taifex.com.tw/cht/3/callsAndPutsDateDown';
 
-    const responseData = await firstValueFrom(this.httpService.post(url, form, { responseType: 'arraybuffer' }))
-      .then(response => csvtojson({ noheader: true, output: 'csv' }).fromString(iconv.decode(response.data, 'big5')));
-
-    const [ fields, dealersCalls, sitcCalls, finiCalls, dealersPuts, sitcPuts, finiPuts ] = responseData;
+    const response = await firstValueFrom(this.httpService.post(url, form, { responseType: 'arraybuffer' }))
+    const json = await csvtojson({ noheader: true, output: 'csv' }).fromString(iconv.decode(response.data, 'big5'));
+    const [ fields, dealersCalls, sitcCalls, finiCalls, dealersPuts, sitcPuts, finiPuts ] = json;
     if (fields[0] !== '日期') return null;
-
-    const raw = [
-      ...dealersCalls.slice(4),
-      ...sitcCalls.slice(4),
-      ...finiCalls.slice(4),
-      ...dealersPuts.slice(4),
-      ...sitcPuts.slice(4),
-      ...finiPuts.slice(4),
-    ].map(data => numeral(data).value());
-
-    const [
-      dealersCallsLongTradeVolume,
-      dealersCallsLongTradeValue,
-      dealersCallsShortTradeVolume,
-      dealersCallsShortTradeValue,
-      dealersCallsNetTradeVolume,
-      dealersCallsNetTradeValue,
-      dealersCallsLongOiVolume,
-      dealersCallsLongOiValue,
-      dealersCallsShortOiVolume,
-      dealersCallsShortOiValue,
-      dealersCallsNetOiVolume,
-      dealersCallsNetOiValue,
-      sitcCallsLongTradeVolume,
-      sitcCallsLongTradeValue,
-      sitcCallsShortTradeVolume,
-      sitcCallsShortTradeValue,
-      sitcCallsNetTradeVolume,
-      sitcCallsNetTradeValue,
-      sitcCallsLongOiVolume,
-      sitcCallsLongOiValue,
-      sitcCallsShortOiVolume,
-      sitcCallsShortOiValue,
-      sitcCallsNetOiVolume,
-      sitcCallsNetOiValue,
-      finiCallsLongTradeVolume,
-      finiCallsLongTradeValue,
-      finiCallsShortTradeVolume,
-      finiCallsShortTradeValue,
-      finiCallsNetTradeVolume,
-      finiCallsNetTradeValue,
-      finiCallsLongOiVolume,
-      finiCallsLongOiValue,
-      finiCallsShortOiVolume,
-      finiCallsShortOiValue,
-      finiCallsNetOiVolume,
-      finiCallsNetOiValue,
-      dealersPutsLongTradeVolume,
-      dealersPutsLongTradeValue,
-      dealersPutsShortTradeVolume,
-      dealersPutsShortTradeValue,
-      dealersPutsNetTradeVolume,
-      dealersPutsNetTradeValue,
-      dealersPutsLongOiVolume,
-      dealersPutsLongOiValue,
-      dealersPutsShortOiVolume,
-      dealersPutsShortOiValue,
-      dealersPutsNetOiVolume,
-      dealersPutsNetOiValue,
-      sitcPutsLongTradeVolume,
-      sitcPutsLongTradeValue,
-      sitcPutsShortTradeVolume,
-      sitcPutsShortTradeValue,
-      sitcPutsNetTradeVolume,
-      sitcPutsNetTradeValue,
-      sitcPutsLongOiVolume,
-      sitcPutsLongOiValue,
-      sitcPutsShortOiVolume,
-      sitcPutsShortOiValue,
-      sitcPutsNetOiVolume,
-      sitcPutsNetOiValue,
-      finiPutsLongTradeVolume,
-      finiPutsLongTradeValue,
-      finiPutsShortTradeVolume,
-      finiPutsShortTradeValue,
-      finiPutsNetTradeVolume,
-      finiPutsNetTradeValue,
-      finiPutsLongOiVolume,
-      finiPutsLongOiValue,
-      finiPutsShortOiVolume,
-      finiPutsShortOiValue,
-      finiPutsNetOiVolume,
-      finiPutsNetOiValue,
-    ] = raw;
 
     return {
       date,
-      finiCallsLongTradeVolume,
-      finiCallsLongTradeValue,
-      finiCallsShortTradeVolume,
-      finiCallsShortTradeValue,
-      finiCallsNetTradeVolume,
-      finiCallsNetTradeValue,
-      finiCallsLongOiVolume,
-      finiCallsLongOiValue,
-      finiCallsShortOiVolume,
-      finiCallsShortOiValue,
-      finiCallsNetOiVolume,
-      finiCallsNetOiValue,
-      finiPutsLongTradeVolume,
-      finiPutsLongTradeValue,
-      finiPutsShortTradeVolume,
-      finiPutsShortTradeValue,
-      finiPutsNetTradeVolume,
-      finiPutsNetTradeValue,
-      finiPutsLongOiVolume,
-      finiPutsLongOiValue,
-      finiPutsShortOiVolume,
-      finiPutsShortOiValue,
-      finiPutsNetOiVolume,
-      finiPutsNetOiValue,
-      sitcCallsLongTradeVolume,
-      sitcCallsLongTradeValue,
-      sitcCallsShortTradeVolume,
-      sitcCallsShortTradeValue,
-      sitcCallsNetTradeVolume,
-      sitcCallsNetTradeValue,
-      sitcCallsLongOiVolume,
-      sitcCallsLongOiValue,
-      sitcCallsShortOiVolume,
-      sitcCallsShortOiValue,
-      sitcCallsNetOiVolume,
-      sitcCallsNetOiValue,
-      sitcPutsLongTradeVolume,
-      sitcPutsLongTradeValue,
-      sitcPutsShortTradeVolume,
-      sitcPutsShortTradeValue,
-      sitcPutsNetTradeVolume,
-      sitcPutsNetTradeValue,
-      sitcPutsLongOiVolume,
-      sitcPutsLongOiValue,
-      sitcPutsShortOiVolume,
-      sitcPutsShortOiValue,
-      sitcPutsNetOiVolume,
-      sitcPutsNetOiValue,
-      dealersCallsLongTradeVolume,
-      dealersCallsLongTradeValue,
-      dealersCallsShortTradeVolume,
-      dealersCallsShortTradeValue,
-      dealersCallsNetTradeVolume,
-      dealersCallsNetTradeValue,
-      dealersCallsLongOiVolume,
-      dealersCallsLongOiValue,
-      dealersCallsShortOiVolume,
-      dealersCallsShortOiValue,
-      dealersCallsNetOiVolume,
-      dealersCallsNetOiValue,
-      dealersPutsLongTradeVolume,
-      dealersPutsLongTradeValue,
-      dealersPutsShortTradeVolume,
-      dealersPutsShortTradeValue,
-      dealersPutsNetTradeVolume,
-      dealersPutsNetTradeValue,
-      dealersPutsLongOiVolume,
-      dealersPutsLongOiValue,
-      dealersPutsShortOiVolume,
-      dealersPutsShortOiValue,
-      dealersPutsNetOiVolume,
-      dealersPutsNetOiValue,
+      finiTxoCallsNetOi: numeral(finiCalls[14]).value(),
+      finiTxoCallsNetOiValue: numeral(finiCalls[15]).value(),
+      sitcTxoCallsNetOi: numeral(sitcCalls[14]).value(),
+      sitcTxoCallsNetOiValue: numeral(sitcCalls[15]).value(),
+      dealersTxoCallsNetOi: numeral(dealersCalls[14]).value(),
+      dealersTxoCallsNetOiValue: numeral(dealersCalls[15]).value(),
+      finiTxoPutsNetOi: numeral(finiPuts[14]).value(),
+      finiTxoPutsNetOiValue: numeral(finiPuts[15]).value(),
+      sitcTxoPutsNetOi: numeral(sitcPuts[14]).value(),
+      sitcTxoPutsNetOiValue: numeral(sitcPuts[15]).value(),
+      dealersTxoPutsNetOi: numeral(dealersPuts[14]).value(),
+      dealersTxoPutsNetOiValue: numeral(dealersPuts[15]).value(),
     };
   }
 }
