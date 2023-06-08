@@ -289,11 +289,11 @@ export class TwseScraperService {
       const [symbol, name, ...values] = row;
       const data: Record<string, any> = { date, symbol, name };
       data.openPrice = numeral(values[3]).value();
-      data.highPrice = numeral(values[4]).value()
-      data.lowPrice = numeral(values[5]).value()
-      data.closePrice = numeral(values[6]).value()
-      data.tradeValue = numeral(values[2]).value();
+      data.highPrice = numeral(values[4]).value();
+      data.lowPrice = numeral(values[5]).value();
+      data.closePrice = numeral(values[6]).value();
       data.tradeVolume = numeral(values[0]).value();
+      data.tradeValue = numeral(values[2]).value();
       data.transaction = numeral(values[1]).value();
       data.change = values[7].includes('green')
         ? numeral(values[8]).multiply(-1).value()
