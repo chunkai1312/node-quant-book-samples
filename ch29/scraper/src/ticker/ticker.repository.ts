@@ -74,11 +74,11 @@ export class TickerRepository {
   }
 
   async getMostActives(options?: { date?: string, market?: Market, trade?: 'volume' | 'value', top?: number }) {
-    const date = options?.date || DateTime.local().toISODate();
-    const market = options?.market || Market.TSE;
-    const trade = options?.trade || 'volume';
+    const date = options?.date ?? DateTime.local().toISODate();
+    const market = options?.market ?? Market.TSE;
+    const trade = options?.trade ?? 'volume';
+    const top = options?.top ?? 50;
     const tradeKey = (trade === 'value') ? 'tradeValue' : 'tradeVolume';
-    const top = options?.top || 50;
 
     const results = await this.model.aggregate([
       { $match: {
@@ -99,11 +99,11 @@ export class TickerRepository {
   }
 
   async getInstInvestorsTrades(options?: { date?: string, market?: Market, inst?: 'fini' | 'sitc' | 'dealers', net: 'buy' | 'sell', top?: number }) {
-    const date = options?.date || DateTime.local().toISODate();
-    const market = options?.market || Market.TSE;
-    const inst = options?.inst || `fini`;
-    const net = options?.net || 'buy';
-    const top = options?.top || 50;
+    const date = options?.date ?? DateTime.local().toISODate();
+    const market = options?.market ?? Market.TSE;
+    const inst = options?.inst ?? `fini`;
+    const net = options?.net ?? 'buy';
+    const top = options?.top ?? 50;
     const instKey = `${inst}NetBuySell`;
 
     const results = await this.model.aggregate([

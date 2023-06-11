@@ -124,4 +124,16 @@ export class TickerRepository {
     const [ tickers ] = results.map(doc => doc.data);
     return tickers.slice(0, top);
   }
+
+  async getTickers(options?: { startDate?: string, endDate?: string }) {
+    const startDate = options?.startDate ?? DateTime.local().toISODate();
+    const endDate = options?.endDate ?? DateTime.local().toISODate();
+
+    return this.model
+      .find({ date: { $gte: startDate, $lte: endDate }, type: TickerType.Equity })
+      .select({ _id: 0, __v: 0, createdAt: 0 , updatedAt: 0 })
+      .sort({ date: -1, symbol: 1 })
+      .lean()
+      .exec();
+  }
 }
