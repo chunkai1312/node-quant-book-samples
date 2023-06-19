@@ -1,3 +1,4 @@
+import * as numeral from 'numeral';
 import { Injectable, Logger, NotFoundException, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import { InjectWebSocketClient } from '@fugle/marketdata-nest';
@@ -5,8 +6,7 @@ import { InjectLineNotify, LineNotify } from 'nest-line-notify';
 import { Redis } from 'ioredis';
 import { DateTime } from 'luxon';
 import { WebSocketClient } from '@fugle/marketdata';
-import { CreateMonitorDto } from './dto/create-monitor.dto';
-import { UpdateMonitorDto } from './dto/update-monitor.dto';
+import { CreateAlertDto } from './dto/create-alert.dto';
 import { MonitorRepository } from './monitor.repository';
 import { Monitor } from './monitor.schema';
 
@@ -23,37 +23,32 @@ export class MonitorService implements OnApplicationBootstrap, OnApplicationShut
 
   async onApplicationBootstrap() {
     this.client.stock.connect()
-      .then(() => this.monitorRepository.findAll({ triggered: false }))
+      .then(() => this.monitorRepository.getMonitors())
       .then(monitors => monitors.map(monitor => this.monitor(monitor)));
+
+    this.client.stock.on('message', (message) => {
+      const { event, data } = JSON.parse(message);
+      if (event === 'data' || event === 'snapshot') this.checkMatches(data);
+    });
   }
 
   async onApplicationShutdown() {
     this.client.stock.disconnect();
   }
 
-  async create(createMonitorDto: CreateMonitorDto) {
-    const monitor = await this.monitorRepository.create(createMonitorDto);
+  async getAlerts() {
+    return this.monitorRepository.getAlerts();
+  }
+
+  async createAlert(createAlertDto: CreateAlertDto) {
+    const monitor = await this.monitorRepository.createAlert(createAlertDto);
     await this.monitor(monitor);
     return monitor;
   }
 
-  async findAll() {
-    return this.monitorRepository.findAll();
-  }
-
-  async findOne(id: string) {
-    return this.monitorRepository.findOne(id);
-  }
-
-  async update(id: string, updateMonitorDto: UpdateMonitorDto) {
-    const monitor = await this.monitorRepository.update(id, updateMonitorDto);
-    if (!monitor) throw new NotFoundException('monitor not found');
-    return monitor;
-  }
-
-  async remove(id: string) {
-    const monitor = await this.monitorRepository.remove(id);
-    if (!monitor) throw new NotFoundException('monitor not found');
+  async removeAlert(id: string) {
+    const monitor = await this.monitorRepository.removeAlert(id);
+    if (!monitor) throw new NotFoundException('alert not found');
     await this.unmonitor(monitor);
     return monitor;
   }
@@ -68,16 +63,10 @@ export class MonitorService implements OnApplicationBootstrap, OnApplicationShut
       .zadd(monitable, value, key)
       .exec();
 
-    if (this.subscriptions.has(symbol)) return;
-
-    this.client.stock.subscribe({ channel: 'aggregates', symbol });
-
-    this.client.stock.on('message', (message) => {
-      const { event, data } = JSON.parse(message);
-      if (event === 'data' || event === 'snapshot') this.checkMatches(data);
-    });
-
-    this.subscriptions.add(symbol);
+    if (!this.subscriptions.has(symbol)) {
+      this.client.stock.subscribe({ channel: 'aggregates', symbol });
+      this.subscriptions.add(symbol);
+    }
   }
 
   private async unmonitor(monitor: Monitor) {
@@ -107,27 +96,29 @@ export class MonitorService implements OnApplicationBootstrap, OnApplicationShut
 
     for (const monitor of monitors) {
       await this.unmonitor(monitor);
-      await this.sendNotification(monitor, data);
+      if (monitor.alert) await this.sendAlert(monitor, data);
     }
   }
 
-  private async sendNotification(monitor: Monitor, data: Record<string, any>) {
-    const { _id, title } = monitor;
-    const { symbol, name, lastTrade, total } = data;
+  private async sendAlert(monitor: Monitor, data: Record<string, any>) {
+    const { _id, alert } = monitor;
+    const { symbol, name, lastPrice, change, changePercent, lastUpdated } = data;
     const time = DateTime
-      .fromMillis(Math.floor(lastTrade.time / 1000))
+      .fromMillis(Math.floor(lastUpdated / 1000))
       .toFormat('yyyy/MM/dd HH:mm:ss');
 
     const message = [''].concat([
-      `<<${title}>>`,
+      `<<${alert.title}>>`,
+      `${alert.message}`,
+      `---`,
       `${name} (${symbol})`,
-      `成交價: ${lastTrade.price}`,
-      `成交量: ${total.tradeVolume}`,
+      `成交: ${numeral(lastPrice).format('0.00')}`,
+      `漲跌: ${numeral(change).format('+0.00')} (${numeral(changePercent).format('+0.00')}%)`,
       `時間: ${time}`,
     ]).join('\n');
 
     await this.lineNotify.send({ message })
-      .then(() => this.monitorRepository.update(_id, { ...monitor, triggered: true }))
+      .then(() => this.monitorRepository.triggerMonitor(_id))
       .catch((err) => Logger.error(err.message, err.stack, MonitorService.name));
   }
 }

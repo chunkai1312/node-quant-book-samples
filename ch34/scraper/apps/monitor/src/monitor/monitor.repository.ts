@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { Monitor, MonitorDocument } from './monitor.schema';
-import { CreateMonitorDto } from './dto/create-monitor.dto';
-import { UpdateMonitorDto } from './dto/update-monitor.dto';
+import { CreateAlertDto } from './dto/create-alert.dto';
 
 @Injectable()
 export class MonitorRepository {
@@ -11,23 +10,23 @@ export class MonitorRepository {
     @InjectModel(Monitor.name) private readonly model: Model<MonitorDocument>,
   ) {}
 
-  async create(createMonitorDto: CreateMonitorDto) {
-    return this.model.create(createMonitorDto);
+  async getMonitors() {
+    return this.model.find({ triggered: false });
   }
 
-  async findAll(filter?: FilterQuery<Monitor>) {
-    return this.model.find(filter);
+  async triggerMonitor(id: string) {
+    await this.model.updateOne({ _id: id }, { triggered: true });
   }
 
-  async findOne(id: string) {
-    return this.model.findById(id);
+  async createAlert(createAlertDto: CreateAlertDto) {
+    return this.model.create({ ...createAlertDto, alert: JSON.parse(createAlertDto.alert) });
   }
 
-  async update(id: string, updateMonitorDto: UpdateMonitorDto) {
-    return this.model.findByIdAndUpdate(id, updateMonitorDto, { new: true });
+  async getAlerts() {
+    return this.model.find({ alert: { $exists: true } });
   }
 
-  async remove(id: string) {
-    return this.model.findByIdAndRemove(id);
+  async removeAlert(id: string) {
+    return this.model.findOneAndRemove({ _id: id, alert: { $exists: true } });
   }
 }

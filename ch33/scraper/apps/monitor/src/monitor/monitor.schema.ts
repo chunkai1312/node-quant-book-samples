@@ -8,9 +8,6 @@ export class Monitor {
   _id: string;
 
   @Prop()
-  title: string;
-
-  @Prop()
   symbol: string;
 
   @Prop()
@@ -18,6 +15,12 @@ export class Monitor {
 
   @Prop()
   value: number;
+
+  @Prop(raw({
+    title: { type: String },
+    message: { type: String },
+  }))
+  alert: Record<string, any>;
 
   @Prop({ default: false })
   triggered: boolean;

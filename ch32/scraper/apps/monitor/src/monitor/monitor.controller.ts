@@ -1,34 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { MonitorService } from './monitor.service';
-import { CreateMonitorDto } from './dto/create-monitor.dto';
-import { UpdateMonitorDto } from './dto/update-monitor.dto';
+import { CreateAlertDto } from './dto/create-alert.dto';
 
-@Controller('monitors')
+@Controller('monitor')
 export class MonitorController {
   constructor(private readonly monitorService: MonitorService) {}
 
-  @Post()
-  create(@Body() createMonitorDto: CreateMonitorDto) {
-    return this.monitorService.create(createMonitorDto);
+  @Get('/alerts')
+  getAlerts() {
+    return this.monitorService.getAlerts();
   }
 
-  @Get()
-  findAll() {
-    return this.monitorService.findAll();
+  @Post('/alerts')
+  createAlert(@Body() createAlertDto: CreateAlertDto) {
+    return this.monitorService.createAlert(createAlertDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.monitorService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMonitorDto: UpdateMonitorDto) {
-    return this.monitorService.update(id, updateMonitorDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.monitorService.remove(id);
+  @Delete('/alerts/:id')
+  removeAlert(@Param('id') id: string) {
+    return this.monitorService.removeAlert(id);
   }
 }

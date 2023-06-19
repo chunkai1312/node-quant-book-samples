@@ -1,10 +1,7 @@
-import { IsString, IsNumber, IsEnum } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsJSON } from 'class-validator';
 import { MonitorType } from '../enums';
 
-export class CreateMonitorDto {
-  @IsString()
-  title: string;
-
+export class CreateAlertDto {
   @IsString()
   symbol: string;
 
@@ -13,4 +10,7 @@ export class CreateMonitorDto {
 
   @IsNumber()
   value: number;
+
+  @IsJSON()
+  alert: string;
 }
