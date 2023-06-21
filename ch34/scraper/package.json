@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@fugle/backtest": "^0.1.0-beta.2",
-    "@fugle/marketdata": "^1.0.0",
+    "@fugle/marketdata": "^1.0.1",
     "@fugle/marketdata-nest": "^1.0.0",
     "@fugle/trade": "^0.4.1",
     "@fugle/trade-nest": "^0.1.4",

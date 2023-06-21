@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@fugle/backtest": "^0.1.0-beta.2",
-    "@fugle/marketdata": "^1.0.0",
+    "@fugle/marketdata": "^1.0.1",
     "@fugle/marketdata-nest": "^1.0.0",
     "@liaoliaots/nestjs-redis": "^9.0.5",
     "@nestjs-modules/mailer": "^1.8.1",
