@@ -15,14 +15,13 @@ export class ScreenerService {
   @Cron('0 30 22 * * *')
   async sendSelection(date: string = DateTime.local().toISODate()) {
     const { name, tickers, date: dataDate } = await this.selectNew20DayHighs({ date });
-    const message = [
-      ``,
+    const message = [''].concat([
       `<<${name}>>`,
       `---`,
       `${tickers.map(({symbol, name}) => `${name} (${symbol})`).join('\n')}`,
       `---`,
       `資料日期: ${DateTime.fromISO(dataDate).toFormat('yyyy/MM/dd')}`,
-    ].join('\n');
+    ]).join('\n');
 
     await this.lineNotify.send({ message })
       .then(() => Logger.log(`"${name}" 已送出`, ScreenerService.name))

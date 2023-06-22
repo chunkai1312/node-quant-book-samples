@@ -23,8 +23,8 @@ export class ReportService {
   async sendReport(date: string = DateTime.local().toISODate()) {
     const workbook = await this.createReport(date);
     const dataDate = workbook.getWorksheet(1).name.split(' ')[0];
-    const subject = `${dataDate} 盤後報告`;
-    const filename = `${dataDate}_盤後報告.xlsx`;
+    const subject = `${dataDate} 盤後資訊`;
+    const filename = `${dataDate}_盤後資訊.xlsx`;
     const content = await workbook.xlsx.writeBuffer();
     const attachments = [{ filename, content }];
 
