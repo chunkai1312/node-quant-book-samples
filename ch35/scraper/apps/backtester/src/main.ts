@@ -1,4 +1,4 @@
-import { CommandFactory } from 'nest-commander';
+import { CommandFactory } from 'nest-commander/src';
 import { AppModule } from './app.module';
 
 async function bootstrap() {

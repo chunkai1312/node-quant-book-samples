@@ -1,10 +1,10 @@
 import * as _ from 'lodash';
 import * as numeral from 'numeral';
-import * as csvtojson from 'csvtojson';
+import * as csvtojson from 'csvtojson/v2';
 import { DateTime } from 'luxon';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs/dist/types';
 
 @Injectable()
 export class TdccScraperService {

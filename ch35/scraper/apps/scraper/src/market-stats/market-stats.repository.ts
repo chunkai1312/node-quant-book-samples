@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model } from 'mongoose/types';
 import { MarketStats, MarketStatsDocument } from './market-stats.schema';
 
 @Injectable()

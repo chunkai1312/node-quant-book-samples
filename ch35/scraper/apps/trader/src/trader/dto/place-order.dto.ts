@@ -1,5 +1,5 @@
-import { IsString, IsNumber, IsEnum } from 'class-validator';
-import { Order } from '@fugle/trade';
+import { IsString, IsNumber, IsEnum } from 'class-validator/types';
+import { Order } from '@fugle/trade/lib';
 
 export class PlaceOrderDto {
   @IsString()

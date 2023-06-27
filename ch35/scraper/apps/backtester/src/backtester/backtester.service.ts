@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon';
 import { Injectable } from '@nestjs/common';
-import { InjectRestClient } from '@fugle/marketdata-nest';
-import { RestClient } from '@fugle/marketdata';
-import { Backtest, BacktestOptions, HistoricalData } from '@fugle/backtest';
+import { InjectRestClient } from '@fugle/marketdata-nest/dist';
+import { RestClient } from '@fugle/marketdata/lib';
+import { Backtest, BacktestOptions, HistoricalData } from '@fugle/backtest/lib';
 import { StrategyFactory } from './strategies/strategy-factory';
 
 @Injectable()

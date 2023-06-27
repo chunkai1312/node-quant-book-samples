@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { FugleMarketDataModule } from '@fugle/marketdata-nest';
+import { FugleMarketDataModule } from '@fugle/marketdata-nest/dist';
 import { BacktesterModule } from './backtester/backtester.module';
 
 @Module({

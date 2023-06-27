@@ -19,6 +19,15 @@
         "tsConfigPath": "apps/scraper/tsconfig.app.json"
       }
     },
+    "backtester": {
+      "type": "application",
+      "root": "apps/backtester",
+      "entryFile": "main",
+      "sourceRoot": "apps/backtester/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/backtester/tsconfig.app.json"
+      }
+    },
     "monitor": {
       "type": "application",
       "root": "apps/monitor",

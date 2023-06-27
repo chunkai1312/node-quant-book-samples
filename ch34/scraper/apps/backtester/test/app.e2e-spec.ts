@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { BacktesterModule } from './../src/backtester.module';
+import { BacktesterModule } from '../src/backtester.module';
 
 describe('BacktesterController (e2e)', () => {
   let app: INestApplication;

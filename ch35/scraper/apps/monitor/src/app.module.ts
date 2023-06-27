@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { RedisModule } from '@liaoliaots/nestjs-redis';
-import { FugleMarketDataModule } from '@fugle/marketdata-nest';
-import { LineNotifyModule } from 'nest-line-notify';
+import { RedisModule } from '@liaoliaots/nestjs-redis/dist';
+import { FugleMarketDataModule } from '@fugle/marketdata-nest/dist';
+import { LineNotifyModule } from 'nest-line-notify/dist';
 import { MonitorModule } from './monitor/monitor.module';
 
 @Module({

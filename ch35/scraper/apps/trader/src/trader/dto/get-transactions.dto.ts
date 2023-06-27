@@ -1,4 +1,4 @@
-import { IsIn } from 'class-validator';
+import { IsIn } from 'class-validator/types';
 
 type Range = '0d' | '3d' | '1m' | '3m';
 

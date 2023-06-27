@@ -5,6 +5,9 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "bin": {
+    "backtester": "bin/backtester"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
@@ -20,7 +23,8 @@
     "test:e2e": "jest --config ./apps/scraper/test/jest-e2e.json"
   },
   "dependencies": {
-    "@fugle/marketdata": "^1.0.0",
+    "@fugle/backtest": "^0.1.0-beta.2",
+    "@fugle/marketdata": "^1.0.2",
     "@fugle/marketdata-nest": "^1.0.0",
     "@nestjs-modules/mailer": "^1.8.1",
     "@nestjs/axios": "^2.0.0",
@@ -37,11 +41,13 @@
     "lodash": "^4.17.21",
     "luxon": "^3.3.0",
     "mongoose": "^7.2.2",
+    "nest-commander": "^3.11.0",
     "nest-line-notify": "^0.1.1",
     "nodemailer": "^6.9.3",
     "numeral": "^2.0.6",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
+    "technicalindicators": "^3.1.0",
     "yahoo-finance2": "^2.3.10"
   },
   "devDependencies": {

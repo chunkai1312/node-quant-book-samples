@@ -1,12 +1,12 @@
 import * as numeral from 'numeral';
 import { Inject, Injectable, Logger, NotFoundException, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { InjectRedis } from '@liaoliaots/nestjs-redis';
-import { InjectWebSocketClient } from '@fugle/marketdata-nest';
-import { InjectLineNotify, LineNotify } from 'nest-line-notify';
-import { Redis } from 'ioredis';
+import { InjectRedis } from '@liaoliaots/nestjs-redis/dist';
+import { InjectWebSocketClient } from '@fugle/marketdata-nest/dist';
+import { InjectLineNotify, LineNotify } from 'nest-line-notify/dist';
+import { Redis } from 'ioredis/built';
 import { DateTime } from 'luxon';
-import { WebSocketClient } from '@fugle/marketdata';
+import { WebSocketClient } from '@fugle/marketdata/lib';
 import { TRADER_SERVICE } from '@app/common';
 import { CreateAlertDto } from './dto/create-alert.dto';
 import { CreateOrderDto } from './dto/create-order.dto';

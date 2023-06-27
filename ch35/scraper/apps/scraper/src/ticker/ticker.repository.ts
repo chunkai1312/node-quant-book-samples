@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model } from 'mongoose/types';
 import { DateTime } from 'luxon';
 import { Ticker, TickerDocument } from './ticker.schema';
 import { TickerType, Market, Index } from './enums';

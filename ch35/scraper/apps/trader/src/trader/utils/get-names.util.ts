@@ -1,4 +1,4 @@
-import { Order } from '@fugle/trade';
+import { Order } from '@fugle/trade/lib';
 
 export function getOrderSideName(side: string) {
   const names = {

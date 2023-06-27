@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { InjectFugleTrade, Streamer } from '@fugle/trade-nest';
-import { FugleTrade, Order, OrderPayload } from '@fugle/trade';
-import { InjectLineNotify, LineNotify } from 'nest-line-notify';
+import { InjectFugleTrade, Streamer } from '@fugle/trade-nest/dist';
+import { FugleTrade, Order, OrderPayload } from '@fugle/trade/lib';
+import { InjectLineNotify, LineNotify } from 'nest-line-notify/dist';
 import { PlaceOrderDto } from './dto/place-order.dto';
 import { ReplaceOrderDto } from './dto/replace-order.dto';
 import { GetTransactionsDto } from './dto/get-transactions.dto';

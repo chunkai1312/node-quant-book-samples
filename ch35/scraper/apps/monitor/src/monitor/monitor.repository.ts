@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model } from 'mongoose/types';
 import { Monitor, MonitorDocument } from './monitor.schema';
 import { CreateAlertDto } from './dto/create-alert.dto';
 import { CreateOrderDto } from './dto/create-order.dto';

@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsEnum, IsJSON } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsJSON } from 'class-validator/types';
 import { MonitorType } from '../enums';
 
 export class CreateAlertDto {

@@ -36,6 +36,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/backtester/tsconfig.app.json"
       }
+    },
+    "trader": {
+      "type": "application",
+      "root": "apps/trader",
+      "entryFile": "main",
+      "sourceRoot": "apps/trader/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/trader/tsconfig.app.json"
+      }
     }
   }
 }

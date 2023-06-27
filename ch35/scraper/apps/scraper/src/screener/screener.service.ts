@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import { DateTime } from 'luxon';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { InjectLineNotify, LineNotify } from 'nest-line-notify';
+import { InjectLineNotify, LineNotify } from 'nest-line-notify/dist';
 import { TickerRepository } from '../ticker/ticker.repository';
 
 @Injectable()

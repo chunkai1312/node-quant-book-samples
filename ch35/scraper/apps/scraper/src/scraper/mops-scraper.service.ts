@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
-import * as cheerio from 'cheerio';
-import * as iconv from 'iconv-lite';
+import * as cheerio from 'cheerio/lib';
+import * as iconv from 'iconv-lite/lib';
 import * as numeral from 'numeral';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs/dist/types';
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 

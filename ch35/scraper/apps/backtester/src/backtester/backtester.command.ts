@@ -1,4 +1,4 @@
-import { Command, CommandRunner, Option } from 'nest-commander';
+import { Command, CommandRunner, Option } from 'nest-commander/src';
 import { DateTime } from 'luxon';
 import { StrategyFactory } from './strategies/strategy-factory';
 import { BacktesterService } from './backtester.service';

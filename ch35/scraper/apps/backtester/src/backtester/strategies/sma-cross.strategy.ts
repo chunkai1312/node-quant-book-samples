@@ -1,5 +1,5 @@
-import { Strategy, Context } from '@fugle/backtest';
-import { SMA, CrossUp, CrossDown } from 'technicalindicators';
+import { Strategy, Context } from '@fugle/backtest/lib';
+import { SMA, CrossUp, CrossDown } from 'technicalindicators/declarations';
 
 export class SmaCrossStrategy extends Strategy {
   params = { n1: 20, n2: 60 };

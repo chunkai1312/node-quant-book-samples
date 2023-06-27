@@ -1,4 +1,4 @@
-import { default as yahooFinance } from 'yahoo-finance2';
+import { default as yahooFinance } from 'yahoo-finance2/dist/esm/src/index-node';
 import { DateTime } from 'luxon';
 import { Injectable } from '@nestjs/common';
 

@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { LineNotifyModule } from 'nest-line-notify';
+import { LineNotifyModule } from 'nest-line-notify/dist';
 import { ScraperModule } from './scraper/scraper.module';
 import { MarketStatsModule } from './market-stats/market-stats.module';
 import { TickerModule } from './ticker/ticker.module';

@@ -27,6 +27,7 @@ export class MonitorService implements OnApplicationBootstrap, OnApplicationShut
       .then(monitors => monitors.map(monitor => this.monitor(monitor)));
 
     this.client.stock.on('message', (message) => {
+      console.log(message)
       const { event, data } = JSON.parse(message);
       if (event === 'data' || event === 'snapshot') this.checkMatches(data);
     });

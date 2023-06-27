@@ -11,6 +11,8 @@ import { getMarketName } from '../ticker/utils/get-market-name.util';
 import { getSectorName } from '../ticker/utils/get-sector-name.util';
 import { getFontColorByNetChange } from './utils/get-font-color-by-net-change.util';
 
+import { writeFileSync } from 'fs';
+
 @Injectable()
 export class ReportService {
   constructor(
